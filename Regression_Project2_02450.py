@@ -9,8 +9,6 @@ from matplotlib.pylab import (figure, semilogx, loglog, xlabel, ylabel, legend,
                            title, subplot, show, grid)
 import os 
 
-# Set directory to same as the script
-#os.chdir(os.path.dirname(__file__))
 
 # Import data
 data = pd.read_csv('Glass data/glass.data',header=None)
@@ -35,23 +33,18 @@ X_0 = X_0[:,1:]
 
 N, M = X_0.shape
 
-# Descriptive Statistics
-df_describe = pd.DataFrame(X_0)
-print (df_describe.describe())
 
-
-#Standardize (Part A.1 in project description)
-
-m = X_0.mean(axis=0)
-sd = np.std(X_0,0)
-X = (X_0-m)/sd
+# Offset attribute
+X = np.concatenate((np.ones((X_0.shape[0],1)),X_0),1)
+attributeNames = [u'Offset']+attributeNames
+M = M+1
 
 # K-fold crossvalidation
 K = 10
 CV = model_selection.KFold(K, shuffle=True)
 
 # Values of lambda
-lambdas = 0 #?????????????
+lambdas = np.power(10.,range(-2,5))
 
 # Initialize variables
 Error_train = np.empty((K,1))
