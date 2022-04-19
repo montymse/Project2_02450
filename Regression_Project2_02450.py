@@ -32,7 +32,7 @@ df_describe = pd.DataFrame(X)
 print (df_describe.describe())
 
 
-#Standadize (Part A.1 in project description)
+#Standardize (Part A.1 in project description)
 
 m = X.mean(axis=0)
 sd = np.std(X,0)
