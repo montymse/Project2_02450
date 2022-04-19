@@ -26,8 +26,6 @@ X=X.to_numpy()
 y  = X[:,0]
 X = X[:,1:]
 
-# Print to console
-print('-'*30,' X ','-'*30,'\n',X)           
 
 # Descriptive Statistics
 df_describe = pd.DataFrame(X)
