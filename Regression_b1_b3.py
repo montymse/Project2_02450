@@ -1,4 +1,4 @@
-# Script from exercise 8.2.6 reused to solve Question B.2 in project 2
+# Script from exercise 8.2.6 & 7.2.1 reused to solve Question B.2 in project 2
 import numpy as np
 import torch
 from sklearn import model_selection
@@ -76,15 +76,15 @@ for (k, (train_index, test_index)) in enumerate(CV.split(X,y)):
     
         
 #%% Linear regression    
-    X_train = X[train_index,:]
-    y_train = y[train_index]
-    X_test = X[test_index,:]
-    y_test = y[test_index]
-        
-    # X_train = X[train_index]
+    # X_train = X[train_index,:]
     # y_train = y[train_index]
-    # X_test = X[test_index]
+    # X_test = X[test_index,:]
     # y_test = y[test_index]
+        
+    X_train = X[train_index]
+    y_train = y[train_index]
+    X_test = X[test_index]
+    y_test = y[test_index]
     internal_cross_validation = 10
         
     model_LR = lm.LinearRegression().fit(X_train, y_train)
@@ -131,14 +131,14 @@ def compare(zA, zB, alpha = 0.05):
     p = 2*st.t.cdf( -np.abs( np.mean(z) )/st.sem(z), df=len(z)-1)  # p-value
 
     print('\nConfidence Interval: {0}'.format(CI))
-    print('\nP-value: {0}\n'.format(p))
+    print('P-value:               {0}\n'.format(p))
     
 
-print('ANN vs Linear Regression')
+print('\n\n-----------------ANN vs Linear Regression------------------------------')
 compare(MSE_Loss[:,2], MSE_Loss[:,0])
 
-print('tANN vs Baseline')
+print('-----------------ANN vs Baseline---------------------------------------')
 compare(MSE_Loss[:,2], MSE_Loss[:,1])
 
-print('Linear Regression vs Baseline')
+print('-----------------Linear Regression vs Baseline-------------------------')
 compare(MSE_Loss[:,0], MSE_Loss[:,1])
