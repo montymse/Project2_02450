@@ -7,6 +7,8 @@ import sklearn.linear_model as lm
 from scipy import stats
 import scipy.stats as st
 import pandas as pd
+from toolbox_02450 import rlr_validate
+
 
 
 # Import data
@@ -44,16 +46,18 @@ if do_pca_preprocessing:
     X = X @ V[:,:k_pca]
     N, M = X.shape
 
+lambdas = np.power(10.,range(-5,8))
 
 # Parameters for neural network classifier
 n_hidden_units = 2      # number of hidden units
-n_replicates = 1        # number of networks trained in each k-fold
+n_replicates = 2        # number of networks trained in each k-fold
 max_iter = 10000
 
 # K-fold crossvalidation
-K = 3                   # only three folds to speed up this example
+K = 2
+K2 = 2          
 CV = model_selection.KFold(K, shuffle=True)
-
+CV2 = model_selection.KFold(K2, shuffle=True)
 
 # Loss list
 MSE_Loss = np.empty((K,4))
@@ -71,57 +75,69 @@ model_ANN = lambda: torch.nn.Sequential(
 loss_fn = torch.nn.MSELoss() # notice how this is now a mean-squared-error loss
 
 errors = [] # make a list for storing generalizaition error in each loop
-for (k, (train_index, test_index)) in enumerate(CV.split(X,y)): 
-    print('\nCrossvalidation fold: {0}/{1}'.format(k+1,K))    
-    
-        
-#%% Linear regression    
-    # X_train = X[train_index,:]
-    # y_train = y[train_index]
-    # X_test = X[test_index,:]
-    # y_test = y[test_index]
-        
-    X_train = X[train_index]
-    y_train = y[train_index]
-    X_test = X[test_index]
-    y_test = y[test_index]
-    internal_cross_validation = 10
-        
-    model_LR = lm.LinearRegression().fit(X_train, y_train)
 
-    MSE_Loss[k,0] = np.square(y_test-model_LR.predict(X_test)).sum()/y_test.shape[0]
-               
+mu = np.empty((K, M-1))
+sigma = np.empty((K, M-1))
 
-#%% Baseline    
+for (c, (train_index, test_index)) in enumerate(CV.split(X,y)): 
+    print('\nOuter Crossvalidation fold: {0}/{1}'.format(c+1,K))
+    X_train0 = X[train_index]
+    y_train0 = y[train_index]
+    X_test0 = X[test_index]
+    y_test0 = y[test_index]
 
-    MSE_Loss[k,1] = np.square(y_test-y_test.mean()).sum(axis=0)/y_test.shape[0]
-
-#%% ANN    
-    # Extract training and test set for current CV fold, convert to tensors
-    # X_train = torch.Tensor(X[train_index,:])
-    # y_train = torch.Tensor(y[train_index])
-    # X_test = torch.Tensor(X[test_index,:])
-    # y_test = torch.Tensor(y[test_index])
-    
-    X_train = torch.Tensor(X[train_index,:])
-    y_train = torch.Tensor(y[train_index].reshape(len(y[train_index]),1))
-    X_test = torch.Tensor(X[test_index,:])
-    y_test = torch.Tensor(y[test_index].reshape(len(y[test_index]),1))
-    
-    # Train the net on training data
-    net, final_loss, learning_curve = train_neural_net(model_ANN,
-                                                       loss_fn,
-                                                       X=X_train,
-                                                       y=y_train,
-                                                       n_replicates=n_replicates,
-                                                       max_iter=max_iter)
+    for (k, (train_index, test_index)) in enumerate(CV.split(X_train0,y_train0)): 
+        print('\n\tInner Crossvalidation fold: {0}/{1}'.format(k+1,K))
         
-    # Determine estimated class labels for test set
-    y_test_est = net(X_test)
+    #%% Linear regression    
+        X_train = X[train_index]
+        y_train = y[train_index]
+        X_test = X[test_index]
+        y_test = y[test_index]
+        internal_cross_validation = 10
+          
+        X0 = (X_train - np.mean(X_train,0) ) / np.std(X_train,0)
+        X0 = np.concatenate((np.ones((X_train.shape[0],1)),X_train),1)
     
-    # Determine errors and errors
-    se = (y_test_est.float()-y_test.float())**2 # squared error
-    MSE_Loss[k,2] = (sum(se).type(torch.float)/len(y_test)).data.numpy() #mean
+        opt_val_err, opt_lambda, mean_w_vs_lambda, train_err_vs_lambda, test_err_vs_lambda = rlr_validate(X0, y_train, lambdas, internal_cross_validation)
+    
+        model_LR = lm.LinearRegression().fit(X_train, y_train)
+    
+        MSE_Loss[k,0] = np.square(y_test-model_LR.predict(X_test)).sum()/y_test.shape[0]
+    
+    #%% Baseline    
+        MSE_Loss[k,1] = np.square(y_test-y_test.mean()).sum(axis=0)/y_test.shape[0]
+        
+    #%% ANN          
+        X_train = torch.Tensor(X[train_index,:])
+        y_train = torch.Tensor(y[train_index].reshape(len(y[train_index]),1))
+        X_test = torch.Tensor(X[test_index,:])
+        y_test = torch.Tensor(y[test_index].reshape(len(y[test_index]),1))
+        
+        # Train the net on training data
+        net, final_loss, learning_curve = train_neural_net(model_ANN,
+                                                           loss_fn,
+                                                           X=X_train,
+                                                           y=y_train,
+                                                           n_replicates=n_replicates,
+                                                           max_iter=max_iter)
+    
+        # Determine estimated class labels for test set
+        y_test_est = net(X_test)
+        
+        # Determine errors and errors
+        se = (y_test_est.float()-y_test.float())**2 # squared error
+        MSE_Loss[k,2] = (sum(se).type(torch.float)/len(y_test)).data.numpy() #mean
+    
+    
+    print('\nOuter Crossvalidation fold: {0}/{1}'.format(c+1,K))
+    print('\n Lambda: {0}'.format(opt_lambda))
+    print('\n Loss Linear Regression: {0}'.format(MSE_Loss[k,0]))
+    print('\n Loss Baseline: {0}'.format(MSE_Loss[k,1]))
+    print('\n----------------------------------------------------------------------\n')
+
+
+
    
 
 def compare(zA, zB, alpha = 0.05):

@@ -44,7 +44,7 @@ K = 10
 CV = model_selection.KFold(K, shuffle=True)
 
 # Values of lambda
-lambdas = np.power(10.,range(-2,5))
+lambdas = np.power(10.,range(-5,8))
 
 # Initialize variables
 Error_train = np.empty((K,1))
