@@ -143,6 +143,8 @@ print('- Test error:     {0}'.format(Error_test_rlr.mean()))
 print('- R^2 train:     {0}'.format((Error_train_nofeatures.sum()-Error_train_rlr.sum())/Error_train_nofeatures.sum()))
 print('- R^2 test:     {0}\n'.format((Error_test_nofeatures.sum()-Error_test_rlr.sum())/Error_test_nofeatures.sum()))
 
-print('Weights in last fold:')
+print('Weights in last fold:\n')
+print('\t     Weight \t Regularized \t Non-regularized\ncree')
 for m in range(M):
-    print('{:>15} {:>15}'.format(attributeNames[m], np.round(w_rlr[m,-1],2)))
+    print('{:>15} \t {:.2E} \t\t {:.2E}'.format(attributeNames[m], w_rlr[m,-1], w_noreg[m,-1]))
+    

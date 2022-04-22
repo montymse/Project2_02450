@@ -54,8 +54,8 @@ n_replicates = 2        # number of networks trained in each k-fold
 max_iter = 10000
 
 # K-fold crossvalidation
-K = 2
-K2 = 2          
+K = 5
+K2 = 5          
 CV = model_selection.KFold(K, shuffle=True)
 CV2 = model_selection.KFold(K2, shuffle=True)
 
@@ -134,6 +134,7 @@ for (c, (train_index, test_index)) in enumerate(CV.split(X,y)):
     print('\n Lambda: {0}'.format(opt_lambda))
     print('\n Loss Linear Regression: {0}'.format(MSE_Loss[k,0]))
     print('\n Loss Baseline: {0}'.format(MSE_Loss[k,1]))
+    print('\n Loss ANN: {0}'.format(MSE_Loss[k,2]))
     print('\n----------------------------------------------------------------------\n')
 
 
